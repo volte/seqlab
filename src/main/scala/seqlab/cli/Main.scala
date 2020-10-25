@@ -1,20 +1,44 @@
 package seqlab.cli
 
-import java.util.concurrent.Flow
-
-import akka.actor.ActorSystem
-import akka.stream.scaladsl.{JavaFlowSupport, Sink}
-import javax.sound.midi.{MidiSystem, ShortMessage}
-import seqlab.core.{ScheduledEvent, Sequencer}
+import akka.actor.typed.{ActorSystem, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
+import javax.sound.midi.MidiSystem
+import seqlab.core.actors.Sequencer
+import seqlab.program.{Instruction, Program}
+import seqlab.program.actors.ProgramExecutor
+import seqlab.program.instructions.DebugPrint
 
 import scala.concurrent.duration.DurationDouble
 
 object Main {
-  implicit val mainActorSystem: ActorSystem = ActorSystem()
+  object RootActor {
+    trait Message
+    case object Start extends Message
+
+    def apply(): Behavior[Message] =
+      Behaviors.setup { context =>
+        val sequencer = context.spawn(Sequencer[Instruction](), "sequencer")
+        val executor = context.spawn(ProgramExecutor(sequencer), "executor")
+
+        val outer = Program(
+          DebugPrint(_ => "hello").at(0.3.seconds),
+          DebugPrint(_ => "world").at(0.4.seconds)
+        )
+        val program = Program.repeat(outer, 1.second)
+        sequencer ! Sequencer.AddEvents(program.instructions)
+
+        Behaviors.receiveMessage {
+          case Start =>
+            sequencer ! Sequencer.Start(executor)
+            Behaviors.ignore
+        }
+      }
+  }
+
+  implicit val mainActorSystem: ActorSystem[RootActor.Message] = ActorSystem(RootActor(), "rootActor")
 
   def main(args: Array[String]): Unit = {
     val deviceInfos = MidiSystem.getMidiDeviceInfo
-
     println(deviceInfos.map(_.getName).mkString("Array(", ", ", ")"))
     val deviceInfo = deviceInfos.find(_.getName.contains("VirtualMIDISynth")) getOrElse {
       println("Could not open MIDI device")
@@ -23,31 +47,7 @@ object Main {
     val device = MidiSystem.getMidiDevice(deviceInfo)
     try {
       device.open()
-
-      val options = new Sequencer.Options {
-        override val actorSystem: ActorSystem = mainActorSystem
-      }
-      val sequencer = new Sequencer[Int](options)
-
-      sequencer.schedule(List(
-        ScheduledEvent(1.seconds.toNanos, 123),
-        ScheduledEvent(1.5.seconds.toNanos, 456),
-        ScheduledEvent(1.55.seconds.toNanos, 666),
-        ScheduledEvent(1.9.seconds.toNanos, 900),
-        ScheduledEvent(2.5.seconds.toNanos, 1000)
-      ))
-
-      val eventPublisher = sequencer.start()
-      JavaFlowSupport.Source
-        .fromPublisher(eventPublisher)
-        .to(Sink.foreach(data => {
-          println(data)
-          if (data == 1000) {
-            sequencer.stop()
-            mainActorSystem.terminate()
-          }
-        }))
-        .run()
+      mainActorSystem ! RootActor.Start
     } finally {
       device.close()
     }
