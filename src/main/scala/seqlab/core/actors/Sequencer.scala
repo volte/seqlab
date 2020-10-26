@@ -6,7 +6,7 @@ import seqlab.core.ScheduledEvent
 
 object Sequencer {
   sealed trait SequencerCommand[T]
-  final case class AddEvents[T](events: Seq[ScheduledEvent[T]]) extends SequencerCommand[T]
+  final case class AddEvents[T](events: ScheduledEvent[T]*) extends SequencerCommand[T]
   case class Start[T](client: ActorRef[ScheduledEvent[T]]) extends SequencerCommand[T]
   case class Stop[T]() extends SequencerCommand[T]
 
@@ -16,7 +16,7 @@ object Sequencer {
       val clock = context.spawn(EventDispatchClock(queue, 0), "eventDispatchClock")
 
       Behaviors.receiveMessage {
-        case AddEvents(events) =>
+        case AddEvents(events @ _*) =>
           queue ! EventQueue.Enqueue(events)
           Behaviors.same
         case Start(client: ActorRef[ScheduledEvent[T]]) =>

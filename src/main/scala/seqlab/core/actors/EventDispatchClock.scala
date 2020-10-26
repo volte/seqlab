@@ -24,6 +24,8 @@ object EventDispatchClock {
         case Start(client) =>
           context.self ! Tick()
           running(client, dispatcher, System.nanoTime(), time)
+        case _ =>
+          Behaviors.same
       }
     }
 
@@ -43,6 +45,8 @@ object EventDispatchClock {
           running(client, dispatcher, offset, time + delta)
         case Stop() =>
           stopped(dispatcher, time)
+        case _ =>
+          Behaviors.same
       }
     }
 

@@ -22,18 +22,16 @@ object EventQueue {
   private def dispatcher[T](
       events: Seq[ScheduledEvent[T]]
   ): Behavior[QueueCommand[T]] =
-    Behaviors.receive { (context, message) =>
-      message match {
-        case Enqueue(newEvents) =>
-          dispatcher(mergeEvents(events, newEvents))
-        case Dequeue(upTo, replyTo) =>
-          val (send, keep) = events.span(_.time < upTo)
-          if (send.nonEmpty) {
-            replyTo ! EventsDue(send)
-            dispatcher(keep)
-          } else {
-            Behaviors.same
-          }
-      }
+    Behaviors.receiveMessage {
+      case Enqueue(newEvents) =>
+        dispatcher(mergeEvents(events, newEvents))
+      case Dequeue(upTo, replyTo) =>
+        val (send, keep) = events.span(_.time < upTo)
+        if (send.nonEmpty) {
+          replyTo ! EventsDue(send)
+          dispatcher(keep)
+        } else {
+          Behaviors.same
+        }
     }
 }

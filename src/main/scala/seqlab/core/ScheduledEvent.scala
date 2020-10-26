@@ -1,5 +1,7 @@
 package seqlab.core
 
+import scala.concurrent.duration.FiniteDuration
+
 /**
   * Associates a piece of data with a given time in ticks.
   */
@@ -27,4 +29,8 @@ object ScheduledEvent {
 
       override def toString: String = s"$time: $data"
     }
+
+  implicit class FiniteDurationOperator(duration: FiniteDuration) {
+    def @>[T](data: T): ScheduledEvent[T] = ScheduledEvent(duration.toNanos, data)
+  }
 }

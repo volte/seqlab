@@ -1,55 +1,88 @@
 package seqlab.cli
 
-import akka.actor.typed.{ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import javax.sound.midi.MidiSystem
+import akka.actor.typed.{ActorSystem, Behavior}
 import seqlab.core.actors.Sequencer
-import seqlab.program.{Instruction, Program}
-import seqlab.program.actors.ProgramExecutor
-import seqlab.program.instructions.DebugPrint
-
-import scala.concurrent.duration.DurationDouble
+import seqlab.core.actors.Sequencer.SequencerActorRef
+import seqlab.midi.instructions.PlayNote
+import seqlab.midi.{MidiContext, MidiEngine, Timing}
+import seqlab.program.Program.ScheduledInstruction
+import seqlab.program.actors.InstructionRunner
+import seqlab.program.{BaseContext, Instruction, Program, ProgramExecutor}
 
 object Main {
+  case class Context(base: BaseContext.State[Context], midi: MidiContext.State) extends MidiContext[Context] {
+    override def engine: MidiEngine = midi.engine
+    override def midiTicks: Long = midi.midiTicks
+    override def sequencerActor: SequencerActorRef[Instruction[Context]] = base.sequencerActor
+    override def time: Long = base.time
+    override def tempo: Timing.Tempo = midi.tempo
+  }
+
+  case class Executor(sequencerActor: SequencerActorRef[Instruction[Context]], midiEngine: MidiEngine)
+      extends ProgramExecutor[Context] {
+    override def initialContext: Context =
+      Context(
+        BaseContext.State[Context](sequencerActor, 0),
+        MidiContext.State(midiEngine, midiEngine.timing.tempo(120), 0)
+      )
+
+    override def execute(instruction: ScheduledInstruction[Context], context: Context): Context = {
+      val time = instruction.time
+      val midiTicks = time / context.midi.tempo.ticksPerSecond
+      val thisContext = Context(
+        BaseContext.State[Context](context.base.sequencerActor, instruction.time),
+        MidiContext.State(context.midi.engine, context.midi.tempo, midiTicks)
+      )
+      instruction.data.execute(thisContext)
+      thisContext
+    }
+  }
+
   object RootActor {
     trait Message
     case object Start extends Message
 
-    def apply(): Behavior[Message] =
+    def apply(midiEngine: MidiEngine): Behavior[Message] =
       Behaviors.setup { context =>
-        val sequencer = context.spawn(Sequencer[Instruction](), "sequencer")
-        val executor = context.spawn(ProgramExecutor(sequencer), "executor")
+        import seqlab.core.ScheduledEvent
+        val sequencer = context.spawn(Sequencer[Instruction[Context]](), "sequencer")
+        val executor = Executor(sequencer, midiEngine)
+        val runner = context.spawn(InstructionRunner[Context, Executor](sequencer, executor), "executor")
 
-        val outer = Program(
-          DebugPrint(_ => "hello").at(0.3.seconds),
-          DebugPrint(_ => "world").at(0.4.seconds)
-        )
-        val program = Program.repeat(outer, 1.second)
-        sequencer ! Sequencer.AddEvents(program.instructions)
+        import ScheduledEvent.FiniteDurationOperator
+
+        val tempo = midiEngine.timing.tempo(140)
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        val bassAndSnare = Program[Context](
+          tempo.zero @> PlayNote(9, 35, 100, tempo.eighthNote),
+          tempo.quarterNote @> PlayNote(9, 35, 100, tempo.eighthNote),
+          (2 * tempo.quarterNote) @> PlayNote(9, 38, 100, tempo.eighthNote)
+        ).loopForever(tempo.wholeNote)
+
+        var hihat = Program[Context](
+          tempo.zero @> PlayNote(9, 42, 100, tempo.eighthNote),
+          tempo.eighthNote @> PlayNote(9, 42, 80, tempo.eighthNote)
+        ).loopForever(tempo.eighthNote * 2)
+
+        val program = Program.merge(bassAndSnare, hihat)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        sequencer ! Sequencer.AddEvents(program.instructions: _*)
 
         Behaviors.receiveMessage {
           case Start =>
-            sequencer ! Sequencer.Start(executor)
+            sequencer ! Sequencer.Start(runner)
             Behaviors.ignore
         }
       }
   }
 
-  implicit val mainActorSystem: ActorSystem[RootActor.Message] = ActorSystem(RootActor(), "rootActor")
-
   def main(args: Array[String]): Unit = {
-    val deviceInfos = MidiSystem.getMidiDeviceInfo
-    println(deviceInfos.map(_.getName).mkString("Array(", ", ", ")"))
-    val deviceInfo = deviceInfos.find(_.getName.contains("VirtualMIDISynth")) getOrElse {
-      println("Could not open MIDI device")
-      sys.exit(1)
-    }
-    val device = MidiSystem.getMidiDevice(deviceInfo)
-    try {
-      device.open()
-      mainActorSystem ! RootActor.Start
-    } finally {
-      device.close()
-    }
+    val midiEngine = new MidiEngine(MidiEngine.Options(Seq("VirtualMIDISynth #1")))
+    midiEngine.start()
+    implicit val mainActorSystem: ActorSystem[RootActor.Message] = ActorSystem(RootActor(midiEngine), "rootActor")
+    mainActorSystem ! RootActor.Start
   }
 }
