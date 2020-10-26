@@ -1,8 +1,10 @@
 package seqlab.core.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 import seqlab.core.ScheduledEvent
+
+import scala.concurrent.duration.DurationInt
 
 object EventDispatchClock {
   sealed trait EventDispatchClockCommand[T]
@@ -23,15 +25,19 @@ object EventDispatchClock {
       message match {
         case Start(client) =>
           context.self ! Tick()
-          running(client, dispatcher, System.nanoTime(), time)
+          val eventHandler = context.spawnAnonymous(handler(client))
+          Behaviors.withTimers { timers =>
+            running(eventHandler, dispatcher, timers, System.nanoTime(), time)
+          }
         case _ =>
           Behaviors.same
       }
     }
 
   private def running[T](
-      client: ActorRef[ScheduledEvent[T]],
+      eventHandler: ActorRef[EventQueue.QueueEvent[T]],
       dispatcher: ActorRef[EventQueue.QueueCommand[T]],
+      timers: TimerScheduler[EventDispatchClockCommand[T]],
       offset: Long,
       time: Long
   ): Behavior[EventDispatchClockCommand[T]] =
@@ -39,11 +45,11 @@ object EventDispatchClock {
       message match {
         case Tick() =>
           val delta = (System.nanoTime() - offset) - time
-          val eventHandler = context.spawnAnonymous(handler(client))
           dispatcher ! EventQueue.Dequeue(time + delta, eventHandler)
-          context.self ! Tick()
-          running(client, dispatcher, offset, time + delta)
+          timers.startSingleTimer(Tick(), 1.millis)
+          running(eventHandler, dispatcher, timers, offset, time + delta)
         case Stop() =>
+          context.stop(eventHandler)
           stopped(dispatcher, time)
         case _ =>
           Behaviors.same
@@ -58,6 +64,6 @@ object EventDispatchClock {
         for (event <- events) {
           client ! event
         }
-        Behaviors.stopped
+        Behaviors.same
     }
 }

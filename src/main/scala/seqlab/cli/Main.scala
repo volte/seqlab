@@ -67,9 +67,11 @@ object Main {
         ).loopForever(tempo.eighthNote * 2)
 
         val program = Program.merge(bassAndSnare, hihat)
+        val echo = program.map[Context](_.mapTime(_ + tempo.sixteenthNote.toNanos))
+        val program2 = program //Program.merge(program, echo)
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        sequencer ! Sequencer.AddEvents(program.instructions: _*)
+        sequencer ! Sequencer.AddEvents(program2.instructions: _*)
 
         Behaviors.receiveMessage {
           case Start =>
