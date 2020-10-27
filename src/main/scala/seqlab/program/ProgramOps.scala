@@ -1,9 +1,7 @@
 package seqlab.program
 
-import seqlab.core.ScheduledEvent.FiniteDurationOperator
+import seqlab.core.ScheduledEventOps.ArrowOperator
 import seqlab.program.instructions.ScheduleRelative
-
-import scala.concurrent.duration.FiniteDuration
 
 /**
   * Extended operations on `Program`.
@@ -25,8 +23,8 @@ trait ProgramOps[C] { this: Program[C] =>
 
   /** Return a program that repeats forever at the specified interval. */
   def loopForever[D <: BaseContext[D]](
-      interval: FiniteDuration
+      interval: Long
   )(implicit ev: Instruction[C] <:< Instruction[D]): Program[D] =
-    Program.merge[D](this.map(_.map(ev)), interval @> ScheduleRelative[D](_ => loopForever[D](interval)))
+    Program.merge[D](this.map(_.map(ev)), interval -->: ScheduleRelative[D](_ => loopForever[D](interval)))
 
 }

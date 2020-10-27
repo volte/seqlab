@@ -1,6 +1,5 @@
 package seqlab.program
 
-import seqlab.core.actors.Sequencer
 import seqlab.program.Program.ScheduledInstruction
 
 /**

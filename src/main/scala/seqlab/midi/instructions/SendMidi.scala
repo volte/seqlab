@@ -13,8 +13,8 @@ case class SendMidi[C <: MidiContext[C]](message: MidiMessage) extends Instructi
     * Execute a this instruction in the given context.
     */
   override def execute(context: C): Unit = {
-    for (device <- context.engine.device) {
-      device.getReceiver.send(message, context.midiTicks)
+    for (device <- context.midiEngine.device) {
+      device.getReceiver.send(message, context.time)
     }
   }
 }

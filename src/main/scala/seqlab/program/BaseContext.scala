@@ -1,19 +1,15 @@
 package seqlab.program
 
-import seqlab.core.actors.Sequencer
+import scala.concurrent.duration.FiniteDuration
 
 /**
   * Base context that instructions must implement in order to be compatible with the program executor.
   */
 trait BaseContext[Self <: BaseContext[Self]] {
 
-  /** The sequencer that assembles instructions chronologically. */
-  def sequencerActor: Sequencer.SequencerActorRef[Instruction[Self]]
-
-  /** The elapsed time in nanoseconds. */
+  /** The elapsed time in ticks. */
   def time: Long
-}
 
-object BaseContext {
-  case class State[C <: BaseContext[C]](sequencerActor: Sequencer.SequencerActorRef[Instruction[C]], time: Long)
+  /** Emit some instructions into the program. */
+  def emit(instructions: Program.ScheduledInstruction[Self]*): Unit
 }

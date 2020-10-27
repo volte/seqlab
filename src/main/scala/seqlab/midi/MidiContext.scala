@@ -1,14 +1,8 @@
 package seqlab.midi
 
-import seqlab.core.actors.Sequencer.SequencerActorRef
-import seqlab.program.{BaseContext, Instruction}
+import seqlab.program.BaseContext
 
 trait MidiContext[C <: MidiContext[C]] extends BaseContext[C] {
-  def engine: MidiEngine
-  def tempo: Timing.Tempo
-  def midiTicks: Long
-}
-
-object MidiContext {
-  case class State(engine: MidiEngine, tempo: Timing.Tempo, midiTicks: Long)
+  def midiEngine: MidiEngine
+  def tempo: Timing#Tempo
 }

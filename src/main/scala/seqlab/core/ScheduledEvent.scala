@@ -22,6 +22,9 @@ object ScheduledEvent {
   implicit def ordering[T]: Ordering[ScheduledEvent[T]] =
     (x: ScheduledEvent[T], y: ScheduledEvent[T]) => x.time.compare(y.time)
 
+  implicit def fromTuple[T](input: (Long, T)): ScheduledEvent[T] =
+    ScheduledEvent[T](input._1, input._2)
+
   def apply[T](time0: Long, data0: T): ScheduledEvent[T] =
     new ScheduledEvent[T] {
       override def time: Long = time0
@@ -30,7 +33,7 @@ object ScheduledEvent {
       override def toString: String = s"$time: $data"
     }
 
-  implicit class FiniteDurationOperator(duration: FiniteDuration) {
-    def @>[T](data: T): ScheduledEvent[T] = ScheduledEvent(duration.toNanos, data)
+  implicit class LongOperator(time: Long) {
+    def -->:[T](data: T): ScheduledEvent[T] = ScheduledEvent(time, data)
   }
 }

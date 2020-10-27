@@ -1,12 +1,7 @@
 package seqlab.program
 
-import akka.actor.typed.ActorRef
 import seqlab.core.ScheduledEvent
-import seqlab.core.ScheduledEvent.FiniteDurationOperator
-import seqlab.core.actors.Sequencer
-import seqlab.program.instructions.ScheduleRelative
-
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import seqlab.core.ScheduledEventOps.ArrowOperator
 
 /**
   * A program is a sequence of instructions that execute in a certain type of context.
@@ -15,14 +10,13 @@ trait Program[C] extends ProgramOps[C] {
   import Program.ScheduledInstruction
 
   /**
-    * Return the sequence of instructions in this program, ordered by start time.
+    * Return the sequence of instructions in this program.
     */
   def instructions: Seq[ScheduledInstruction[C]]
 }
 
 object Program {
   type ScheduledInstruction[C] = ScheduledEvent[Instruction[C]]
-  type SequencerActor[C] = ActorRef[Sequencer.SequencerCommand[Instruction[C]]]
 
   object ScheduledInstruction {
     def apply[C](time0: Long, instruction0: Instruction[C]): ScheduledInstruction[C] =
@@ -38,7 +32,7 @@ object Program {
     Program(instruction)
 
   implicit def singleton[C](instruction: Instruction[C]): Program[C] =
-    Program(0.nanos @> instruction)
+    Program(0 -->: instruction)
 
   def merge[C](programs: Program[C]*): Program[C] =
     Program(
