@@ -35,38 +35,73 @@ class ScheduledQueueSpec extends AnyFunSpec with Matchers {
     )
 
     it("should parallelize") {
-      val par = ScheduledQueue.parallel(schedule1, schedule2, schedule3)
-      received = par.dequeue(0)
-      received should contain theSameElementsInOrderAs Seq()
-      received = par.dequeue(10)
-      received should contain theSameElementsInOrderAs Seq( //
+      val queue = ScheduledQueue.parallel(schedule1, schedule2, schedule3)
+      queue.dequeue(0) should contain theSameElementsInOrderAs Seq()
+      queue.time.ticks should be(0)
+      queue.dequeue(10) should contain theSameElementsInOrderAs Seq( //
         0 -->: "1.0",
         0 -->: "2.0",
         0 -->: "3.0"
       )
-      received = par.dequeue(1)
-      received should contain theSameElementsInOrderAs Seq( //
+      queue.time.ticks should be(10)
+      queue.dequeue(1) should contain theSameElementsInOrderAs Seq( //
         10 -->: "1.10",
         10 -->: "3.10"
       )
-      received = par.dequeue(15)
-      received should contain theSameElementsInOrderAs Seq( //
+      queue.time.ticks should be(11)
+      queue.dequeue(15) should contain theSameElementsInOrderAs Seq( //
         11 -->: "2.11",
         20 -->: "1.20",
         21 -->: "1.21",
         24 -->: "2.24"
       )
-      received = par.dequeue(25)
-      received should contain theSameElementsInOrderAs Seq( //
+      queue.time.ticks should be(26)
+      queue.dequeue(25) should contain theSameElementsInOrderAs Seq( //
         27 -->: "2.27",
         31 -->: "3.31",
         44 -->: "3.44"
       )
-      received = par.dequeue(100)
-      received should contain theSameElementsInOrderAs Seq()
+      queue.time.ticks should be(51)
+      queue.dequeue(100) should contain theSameElementsInOrderAs Seq()
+      queue should be(empty)
+      queue.time.ticks should be(151)
+    }
 
-      par should be(empty)
-      par.time should equal(TimePoint(151))
+    it("should sequence") {
+      val queue = ScheduledQueue.sequence(schedule1, schedule2, schedule3)
+      queue.dequeue(0) should contain theSameElementsInOrderAs Seq()
+      queue.time.ticks should be(0)
+      queue.dequeue(10) should contain theSameElementsInOrderAs Seq( //
+        0 -->: "1.0"
+      )
+      queue.time.ticks should be(10)
+      queue.dequeue(1) should contain theSameElementsInOrderAs Seq( //
+        10 -->: "1.10"
+      )
+      queue.time.ticks should be(11)
+      queue.dequeue(10) should contain theSameElementsInOrderAs Seq( //
+        20 -->: "1.20"
+      )
+      queue.time.ticks should be(21)
+      queue.dequeue(5) should contain theSameElementsInOrderAs Seq( //
+        21 -->: "1.21",
+        21 -->: "2.0"
+      )
+      queue.time.ticks should be(26)
+      queue.dequeue(20) should contain theSameElementsInOrderAs Seq( //
+        32 -->: "2.11",
+        45 -->: "2.24"
+      )
+      queue.time.ticks should be(46)
+      queue.dequeue(100) should contain theSameElementsInOrderAs Seq( //
+        48 -->: "2.27",
+        48 -->: "3.0",
+        58 -->: "3.10",
+        79 -->: "3.31",
+        92 -->: "3.44"
+      )
+      queue.time.ticks should be(146)
+      queue should be(empty)
     }
   }
 }
