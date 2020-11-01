@@ -1,6 +1,6 @@
 package seqlab.program
 
-import seqlab.core.ScheduledEventOps.ArrowOperator
+import seqlab.core.ScheduledOps.ArrowOperator
 import seqlab.program.instructions.ScheduleRelative
 
 /**

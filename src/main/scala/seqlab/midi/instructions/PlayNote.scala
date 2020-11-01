@@ -1,7 +1,7 @@
 package seqlab.midi.instructions
 
 import javax.sound.midi.ShortMessage
-import seqlab.core.ScheduledEventOps.ArrowOperator
+import seqlab.core.ScheduledOps.ArrowOperator
 import seqlab.midi.MidiContext
 import seqlab.program.Instruction
 

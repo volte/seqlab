@@ -10,3 +10,4 @@ libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.5"
 libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.0" % Test
+libraryDependencies += "org.scalamock" %% "scalamock" % "4.4.0" % Test

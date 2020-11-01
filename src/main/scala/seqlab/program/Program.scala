@@ -1,7 +1,7 @@
 package seqlab.program
 
-import seqlab.core.ScheduledEvent
-import seqlab.core.ScheduledEventOps.ArrowOperator
+import seqlab.core.Scheduled
+import seqlab.core.ScheduledOps.ArrowOperator
 
 /**
   * A program is a sequence of instructions that execute in a certain type of context.
@@ -16,11 +16,11 @@ trait Program[C] extends ProgramOps[C] {
 }
 
 object Program {
-  type ScheduledInstruction[C] = ScheduledEvent[Instruction[C]]
+  type ScheduledInstruction[C] = Scheduled[Instruction[C]]
 
   object ScheduledInstruction {
     def apply[C](time0: Long, instruction0: Instruction[C]): ScheduledInstruction[C] =
-      ScheduledEvent(time0, instruction0)
+      Scheduled(time0, instruction0)
   }
 
   def apply[C](instructions0: ScheduledInstruction[C]*): Program[C] =

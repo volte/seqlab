@@ -5,13 +5,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.{DurationInt, DurationLong, FiniteDuration}
 
 /**
-  * A sequencer triggers chronologically arranged events from a timeline.
+  * A sequencer is responsible for executing a schedule in real time.
   */
-class Sequencer[E, T <: Timeline[E]](
-    val timeline: T,
-    receiver: Receiver[E],
-    options: Sequencer.Options = Sequencer.Options()
-) {
+class Sequencer[E](val schedule: ScheduledQueue[E], options: Sequencer.Options = Sequencer.Options()) {
   private var thread: Option[Thread] = None
 
   var ticksPerSecond: Long = options.ticksPerSecond
@@ -21,7 +17,8 @@ class Sequencer[E, T <: Timeline[E]](
     override def run(): Unit = {
       var lastTime = System.nanoTime()
       var deltaTicks = 0.0
-      while (!Thread.currentThread().isInterrupted && !timeline.done) {
+      var done = false
+      while (!done) {
         val burstStartTime = System.nanoTime()
         var currentTime = lastTime
         while (currentTime < burstStartTime + options.burstLength.toNanos) {
@@ -30,13 +27,14 @@ class Sequencer[E, T <: Timeline[E]](
           deltaTicks += (delta.nanos / tickLength)
           if (deltaTicks >= 1) {
             val remainder = deltaTicks % 1
-            val events = timeline.advance(TimeSpan(deltaTicks.toInt))
-            for (event <- events) {
-              receiver.receive(event)
-            }
+            schedule.dequeue(deltaTicks.toInt)
+            done = schedule.isEmpty
             deltaTicks = remainder
           }
           lastTime = currentTime
+        }
+        if (Thread.currentThread().isInterrupted) {
+          done = true
         }
         Thread.`yield`()
       }
