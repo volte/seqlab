@@ -1,7 +1,9 @@
 package seqlab.core
 
+import seqlab.util.AutoCloneable
+
 /** A queue for scheduled events that keeps track of the current time. */
-class ScheduledQueue[E](initialEvents: Scheduled[E]*) {
+class ScheduledQueue[E](initialEvents: Scheduled[E]*) extends AutoCloneable[ScheduledQueue[E]] {
   private var _time: TimePoint = 0
   private var events = Seq(initialEvents.sorted: _*)
 
@@ -40,6 +42,9 @@ class ScheduledQueue[E](initialEvents: Scheduled[E]*) {
 }
 
 object ScheduledQueue {
+  def apply[E](initialEvents: Scheduled[E]*): ScheduledQueue[E] =
+    new ScheduledQueue[E](initialEvents: _*)
+
   def parallel[E](schedules: ScheduledQueue[E]*): ScheduledQueue[E] =
     new ScheduledQueue(schedules.flatMap(_.events).sorted: _*)
 

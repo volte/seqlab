@@ -26,5 +26,5 @@ trait Timeline {
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  def create(): this.type#Cursor
+  def instantiate(): this.type#Cursor
 }

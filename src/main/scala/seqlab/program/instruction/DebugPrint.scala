@@ -1,5 +1,7 @@
 package seqlab.program.instruction
 
+import seqlab.program.ProcessContext
+
 case class DebugPrint(value: Any) extends Instruction[Any] {
 
   /**

@@ -1,14 +1,16 @@
 package seqlab.core.timeline
 
+import seqlab.core.TimeScale
+
 import scala.concurrent.duration.{DurationInt, DurationLong, FiniteDuration}
 
 /**
   * A timeline runner is responsible for running a timeline in real time.
   */
-class TimelineRunner[E](val timeline: Timeline, options: TimelineRunner.Options = TimelineRunner.Options()) {
+class TimelineRunner(val cursor: Timeline#Cursor, options: TimelineRunner.Options = TimelineRunner.Options()) {
   private var thread: Option[Thread] = None
 
-  var ticksPerSecond: Long = options.ticksPerSecond
+  var ticksPerSecond: Long = options.timeScale.ticksPerSecond
   def tickLength: FiniteDuration = 1.second / ticksPerSecond
 
   private object Worker extends Runnable {
@@ -16,7 +18,6 @@ class TimelineRunner[E](val timeline: Timeline, options: TimelineRunner.Options 
       var lastTime = System.nanoTime()
       var deltaTicks = 0.0
       var done = false
-      var cursor = timeline.create()
       while (!done) {
         val burstStartTime = System.nanoTime()
         var currentTime = lastTime
@@ -26,7 +27,7 @@ class TimelineRunner[E](val timeline: Timeline, options: TimelineRunner.Options 
           deltaTicks += (delta.nanos / tickLength)
           if (deltaTicks >= 1) {
             val remainder = deltaTicks % 1
-            done |= cursor.advance(deltaTicks.toInt)
+            done |= !cursor.advance(deltaTicks.toInt)
             deltaTicks = remainder
           }
           lastTime = currentTime
@@ -55,5 +56,5 @@ class TimelineRunner[E](val timeline: Timeline, options: TimelineRunner.Options 
 }
 
 object TimelineRunner {
-  case class Options(burstLength: FiniteDuration = 100.millis, ticksPerSecond: Long = 1.second.toNanos)
+  case class Options(burstLength: FiniteDuration = 100.millis, timeScale: TimeScale = TimeScale(1.second.toNanos))
 }

@@ -20,6 +20,6 @@ trait ScheduledOps[+T] { this: Scheduled[T] =>
 
 object ScheduledOps {
   implicit class ArrowOperator[T](data: T) {
-    def -->:(time: Long): Scheduled[T] = Scheduled(time, data)
+    def -->:(time: TimePoint): Scheduled[T] = Scheduled(time, data)
   }
 }

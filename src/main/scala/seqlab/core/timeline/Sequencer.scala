@@ -9,7 +9,7 @@ import scala.collection.immutable.Queue
   */
 class Sequencer(initialTimelines: Timeline*) extends Timeline {
   class SequencerCursor extends Cursor {
-    private var cursors: Queue[Timeline#Cursor] = Queue(initialTimelines.map(_.create()): _*)
+    private var cursors: Queue[Timeline#Cursor] = Queue(initialTimelines.map(_.instantiate()): _*)
     private var _time: TimePoint = 0
 
     /** Advance the timeline by the given timespan. Returns false when the timeline has completed. */
@@ -44,7 +44,7 @@ class Sequencer(initialTimelines: Timeline*) extends Timeline {
 
     /** Append a timeline to this mixer. */
     def append(timeline: Timeline): Unit =
-      cursors = cursors.enqueue(timeline.create())
+      cursors = cursors.enqueue(timeline.instantiate())
 
     /** The time relative to the start of the timeline pointed to by this cursor. */
     override def time: TimePoint =
@@ -52,6 +52,6 @@ class Sequencer(initialTimelines: Timeline*) extends Timeline {
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): Cursor =
+  override def instantiate(): Cursor =
     new SequencerCursor()
 }

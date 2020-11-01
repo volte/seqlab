@@ -6,7 +6,7 @@ import seqlab.core.{TimePoint, TimeSpan}
   */
 class Looper(timeline: Timeline) extends Timeline {
   class LooperCursor extends Cursor {
-    private var cursor = timeline.create()
+    private var cursor = timeline.instantiate()
     private var _time: TimePoint = 0
     private var aborted: Boolean = false
 
@@ -15,12 +15,13 @@ class Looper(timeline: Timeline) extends Timeline {
       var remaining = span
       while (remaining > 0) {
         val prevTime = cursor.time
-        val curDone = cursor.advance(remaining)
+        val curDone = !cursor.advance(remaining)
         val nextTime = cursor.time
         val delta = nextTime - prevTime
+        _time += delta
         remaining -= delta
         if (curDone) {
-          cursor = timeline.create()
+          cursor = timeline.instantiate()
         }
       }
       true
@@ -40,6 +41,6 @@ class Looper(timeline: Timeline) extends Timeline {
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): Cursor =
+  override def instantiate(): Cursor =
     new LooperCursor()
 }

@@ -7,7 +7,7 @@ import seqlab.core.{TimePoint, TimeSpan}
   */
 class Mixer(initialTimelines: Timeline*) extends Timeline {
   class MixerCursor extends Cursor {
-    private var cursors: Seq[Timeline#Cursor] = initialTimelines.map(_.create())
+    private var cursors: Seq[Timeline#Cursor] = initialTimelines.map(_.instantiate())
     private var _time: TimePoint = 0
 
     /** Advance the timeline by the given timespan. Returns false when the timeline has completed. */
@@ -34,7 +34,7 @@ class Mixer(initialTimelines: Timeline*) extends Timeline {
 
     /** Add a timeline to this mixer at the cursor position. */
     def start(timeline: Timeline): Unit =
-      cursors :+= timeline.create()
+      cursors :+= timeline.instantiate()
 
     /** Returns true if the cursor is at the end of the timeline (the `advance` method has turned false). */
     override def done: Boolean =
@@ -46,6 +46,6 @@ class Mixer(initialTimelines: Timeline*) extends Timeline {
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): MixerCursor =
+  override def instantiate(): MixerCursor =
     new MixerCursor()
 }
