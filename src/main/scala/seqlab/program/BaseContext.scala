@@ -12,4 +12,7 @@ trait BaseContext[Self <: BaseContext[Self]] {
 
   /** Emit some instructions into the program. */
   def emit(instructions: Program.ScheduledInstruction[Self]*): Unit
+
+  /** Halt the current program. */
+  def break(): Unit
 }

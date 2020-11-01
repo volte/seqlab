@@ -12,6 +12,6 @@ case class ScheduleRelative[C <: BaseContext[C]](programFactory: C => Program[C]
     */
   override def execute(context: C): Unit = {
     val program = programFactory(context)
-    context.emit(program.instructions.map(_.mapTime(_ + context.time)): _*)
+    context.emit(program.instructions: _*)
   }
 }

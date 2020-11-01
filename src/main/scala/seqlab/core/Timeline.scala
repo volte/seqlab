@@ -5,6 +5,8 @@ package seqlab.core
   */
 trait Timeline[E] {
   def advance(span: TimeSpan): Seq[ScheduledEvent[E]]
+  def break(): Unit
+
   def time: Long
   def done: Boolean
 }

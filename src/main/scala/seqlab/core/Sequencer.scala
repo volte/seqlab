@@ -20,10 +20,10 @@ class Sequencer[E, T <: Timeline[E]](
   private object Worker extends Runnable {
     override def run(): Unit = {
       var lastTime = System.nanoTime()
-      while (!Thread.currentThread().isInterrupted) {
+      var deltaTicks = 0.0
+      while (!Thread.currentThread().isInterrupted && !timeline.done) {
         val burstStartTime = System.nanoTime()
         var currentTime = lastTime
-        var deltaTicks = 0.0
         while (currentTime < burstStartTime + options.burstLength.toNanos) {
           currentTime = System.nanoTime()
           val delta = currentTime - lastTime
@@ -36,7 +36,6 @@ class Sequencer[E, T <: Timeline[E]](
             }
             deltaTicks = remainder
           }
-
           lastTime = currentTime
         }
         Thread.`yield`()
@@ -52,6 +51,10 @@ class Sequencer[E, T <: Timeline[E]](
 
   def stop(): Unit = {
     thread.foreach(_.interrupt())
+  }
+
+  def join(): Unit = {
+    thread.foreach(_.join())
   }
 }
 
