@@ -1,6 +1,6 @@
-package seqlab.program.instructions
+package seqlab.program_old.instructions
 
-import seqlab.program.{BaseContext, Instruction, Program}
+import seqlab.program_old.{BaseContext, Instruction, Program}
 
 /**
   * Schedule the given instructions relative to the current time.

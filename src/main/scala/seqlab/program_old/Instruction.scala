@@ -1,4 +1,4 @@
-package seqlab.program
+package seqlab.program_old
 
 /**
   * An instruction is the unit of work in a sequenced program.

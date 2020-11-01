@@ -1,13 +1,11 @@
-package seqlab.core
-
-import java.util.concurrent.atomic.AtomicBoolean
+package seqlab.core.timeline
 
 import scala.concurrent.duration.{DurationInt, DurationLong, FiniteDuration}
 
 /**
-  * A sequencer is responsible for executing a schedule in real time.
+  * A timeline runner is responsible for running a timeline in real time.
   */
-class Sequencer[E](val schedule: ScheduledQueue[E], options: Sequencer.Options = Sequencer.Options()) {
+class TimelineRunner[E](val timeline: Timeline, options: TimelineRunner.Options = TimelineRunner.Options()) {
   private var thread: Option[Thread] = None
 
   var ticksPerSecond: Long = options.ticksPerSecond
@@ -18,6 +16,7 @@ class Sequencer[E](val schedule: ScheduledQueue[E], options: Sequencer.Options =
       var lastTime = System.nanoTime()
       var deltaTicks = 0.0
       var done = false
+      var cursor = timeline.create()
       while (!done) {
         val burstStartTime = System.nanoTime()
         var currentTime = lastTime
@@ -27,8 +26,7 @@ class Sequencer[E](val schedule: ScheduledQueue[E], options: Sequencer.Options =
           deltaTicks += (delta.nanos / tickLength)
           if (deltaTicks >= 1) {
             val remainder = deltaTicks % 1
-            schedule.dequeue(deltaTicks.toInt)
-            done = schedule.isEmpty
+            done |= cursor.advance(deltaTicks.toInt)
             deltaTicks = remainder
           }
           lastTime = currentTime
@@ -56,6 +54,6 @@ class Sequencer[E](val schedule: ScheduledQueue[E], options: Sequencer.Options =
   }
 }
 
-object Sequencer {
+object TimelineRunner {
   case class Options(burstLength: FiniteDuration = 100.millis, ticksPerSecond: Long = 1.second.toNanos)
 }

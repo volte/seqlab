@@ -1,6 +1,6 @@
-package seqlab.program.instructions
+package seqlab.program_old.instructions
 
-import seqlab.program.{BaseContext, Instruction}
+import seqlab.program_old.{BaseContext, Instruction}
 
 case class DebugPrint[T, C <: BaseContext[C]](fn: C => T) extends Instruction[C] {
 

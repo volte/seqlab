@@ -2,7 +2,7 @@ package seqlab.midi.instructions
 
 import javax.sound.midi.MidiMessage
 import seqlab.midi.{MidiContext, MidiEngine}
-import seqlab.program.{BaseContext, Instruction}
+import seqlab.program_old.{BaseContext, Instruction}
 
 /**
   * Send a MIDI message to the given MIDI engine.

@@ -1,7 +1,7 @@
-package seqlab.program
+package seqlab.program_old
 
 import seqlab.core.ScheduledOps.ArrowOperator
-import seqlab.program.instructions.ScheduleRelative
+import seqlab.program_old.instructions.ScheduleRelative
 
 /**
   * Extended operations on `Program`.

@@ -3,16 +3,10 @@ package seqlab
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import seqlab.core.ScheduledOps.ArrowOperator
-import seqlab.core.{Scheduled, ScheduledQueue, TimePoint}
-
-import scala.collection.mutable
+import seqlab.core.ScheduledQueue
 
 class ScheduledQueueSpec extends AnyFunSpec with Matchers {
-  import Matchers._
-
   describe("Schedule") {
-    var received: Seq[Scheduled[String]] = Seq()
-
     val schedule1 = new ScheduledQueue(
       0 -->: "1.0", //
       10 -->: "1.10",

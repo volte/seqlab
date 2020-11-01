@@ -1,6 +1,6 @@
-package seqlab.program.instructions
+package seqlab.program_old.instructions
 
-import seqlab.program.{BaseContext, Instruction}
+import seqlab.program_old.{BaseContext, Instruction}
 
 case class Execute[C <: BaseContext[C]](fn: C => Unit) extends Instruction[C] {
 

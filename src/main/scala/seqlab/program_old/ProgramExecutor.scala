@@ -1,6 +1,6 @@
-package seqlab.program
+package seqlab.program_old
 
-import seqlab.program.Program.ScheduledInstruction
+import seqlab.program_old.Program.ScheduledInstruction
 
 /**
    A trait that defines how a program is executed.
