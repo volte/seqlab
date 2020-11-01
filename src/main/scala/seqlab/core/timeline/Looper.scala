@@ -5,7 +5,7 @@ import seqlab.core.{TimePoint, TimeSpan}
   * A looper repeats a timeline indefinitely.
   */
 class Looper(timeline: Timeline) extends Timeline {
-  private class LooperCursor extends Cursor {
+  class LooperCursor extends Cursor {
     private var cursor = timeline.create()
     private var _time: TimePoint = 0
     private var aborted: Boolean = false
@@ -27,16 +27,19 @@ class Looper(timeline: Timeline) extends Timeline {
     }
 
     /** Returns true if the cursor is at the end of the timeline (the `advance` method has turned false). */
-    override def done: Boolean = aborted
+    override def done: Boolean =
+      aborted
 
     /** Abort the timeline instance. The `done` method should return true immediately after calling this. */
     override def abort(): Unit =
       aborted = true
 
     /** The time relative to the start of the timeline pointed to by this cursor. */
-    override def time: TimePoint = _time
+    override def time: TimePoint =
+      _time
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): Cursor = new LooperCursor()
+  override def create(): Cursor =
+    new LooperCursor()
 }

@@ -33,6 +33,10 @@ class ScheduledQueue[E](initialEvents: Scheduled[E]*) {
 
   /** Returns true if the event queue is empty. */
   def isEmpty: Boolean = events.isEmpty
+
+  /** Clear all events from the schedule. */
+  def clear(): Unit =
+    events = Seq()
 }
 
 object ScheduledQueue {

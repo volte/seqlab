@@ -6,7 +6,7 @@ import seqlab.core.{TimePoint, TimeSpan}
   * A mixer combines multiple timelines in parallel.
   */
 class Mixer(initialTimelines: Timeline*) extends Timeline {
-  private class MixerCursor extends Cursor {
+  class MixerCursor extends Cursor {
     private var cursors: Seq[Timeline#Cursor] = initialTimelines.map(_.create())
     private var _time: TimePoint = 0
 
@@ -33,17 +33,19 @@ class Mixer(initialTimelines: Timeline*) extends Timeline {
       cursors = Seq()
 
     /** Add a timeline to this mixer at the cursor position. */
-    def start(timeline: Timeline): Unit = {
+    def start(timeline: Timeline): Unit =
       cursors :+= timeline.create()
-    }
 
     /** Returns true if the cursor is at the end of the timeline (the `advance` method has turned false). */
-    override def done: Boolean = cursors.isEmpty
+    override def done: Boolean =
+      cursors.isEmpty
 
     /** The time relative to the start of the timeline pointed to by this cursor. */
-    override def time: TimePoint = _time
+    override def time: TimePoint =
+      _time
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): Cursor = new MixerCursor()
+  override def create(): MixerCursor =
+    new MixerCursor()
 }

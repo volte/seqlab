@@ -8,7 +8,7 @@ import scala.collection.immutable.Queue
   * A sequencer combines multiple timelines in sequence.
   */
 class Sequencer(initialTimelines: Timeline*) extends Timeline {
-  private class SequencerCursor extends Cursor {
+  class SequencerCursor extends Cursor {
     private var cursors: Queue[Timeline#Cursor] = Queue(initialTimelines.map(_.create()): _*)
     private var _time: TimePoint = 0
 
@@ -35,21 +35,23 @@ class Sequencer(initialTimelines: Timeline*) extends Timeline {
     }
 
     /** Returns true if the timeline is finished executing. */
-    override def done: Boolean = cursors.isEmpty
+    override def done: Boolean =
+      cursors.isEmpty
 
     /** Abort the timeline. The `done` method should return true immediately after calling this. */
     override def abort(): Unit =
       cursors = Queue()
 
     /** Append a timeline to this mixer. */
-    def append(timeline: Timeline): Unit = {
+    def append(timeline: Timeline): Unit =
       cursors = cursors.enqueue(timeline.create())
-    }
 
     /** The time relative to the start of the timeline pointed to by this cursor. */
-    override def time: TimePoint = _time
+    override def time: TimePoint =
+      _time
   }
 
   /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def create(): Cursor = new SequencerCursor()
+  override def create(): Cursor =
+    new SequencerCursor()
 }
