@@ -1,6 +1,4 @@
-package seqlab.core.timeline
-
-import seqlab.core.{TimePoint, TimeSpan}
+package seqlab.core
 
 import scala.collection.immutable.Queue
 
@@ -8,7 +6,7 @@ import scala.collection.immutable.Queue
   * A sequencer combines multiple timelines in sequence.
   */
 class Sequencer(initialTimelines: Timeline*) extends Timeline {
-  class SequencerCursor extends Cursor {
+  class Cursor extends Timeline.Cursor {
     private var cursors: Queue[Timeline#Cursor] = Queue(initialTimelines.map(_.instantiate()): _*)
     private var _time: TimePoint = 0
 
@@ -50,8 +48,4 @@ class Sequencer(initialTimelines: Timeline*) extends Timeline {
     override def time: TimePoint =
       _time
   }
-
-  /** Create a new instance of the timeline and return the cursor to its beginning. */
-  override def instantiate(): Cursor =
-    new SequencerCursor()
 }

@@ -1,13 +1,11 @@
-package seqlab.core.timeline
-
-import seqlab.core.TimeScale
+package seqlab.core
 
 import scala.concurrent.duration.{DurationInt, DurationLong, FiniteDuration}
 
 /**
   * A timeline runner is responsible for running a timeline in real time.
   */
-class TimelineRunner(val cursor: Timeline#Cursor, options: TimelineRunner.Options = TimelineRunner.Options()) {
+class TimelineRunner(timeline: Timeline, options: TimelineRunner.Options = TimelineRunner.Options()) {
   private var thread: Option[Thread] = None
 
   var ticksPerSecond: Long = options.timeScale.ticksPerSecond
@@ -18,6 +16,8 @@ class TimelineRunner(val cursor: Timeline#Cursor, options: TimelineRunner.Option
       var lastTime = System.nanoTime()
       var deltaTicks = 0.0
       var done = false
+      val cursor = timeline.instantiate()
+
       while (!done) {
         val burstStartTime = System.nanoTime()
         var currentTime = lastTime

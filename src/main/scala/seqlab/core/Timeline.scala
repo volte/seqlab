@@ -1,16 +1,21 @@
-package seqlab.core.timeline
-
-import seqlab.core.{TimePoint, TimeSpan}
+package seqlab.core
 
 /**
   * A timeline represents behaviour that executes over time.
   */
 trait Timeline {
+  type Cursor <: Timeline.Cursor
+
+  /** Create a new instance of the timeline and return the cursor to its beginning. */
+  def instantiate(): Cursor
+}
+
+object Timeline {
 
   /**
     * A timeline cursor represents the current execution state of a timeline.
     */
-  trait Cursor {
+  trait Cursor { this: AnyRef =>
 
     /** Advance the timeline by the given timespan. Returns false when the timeline has completed. */
     def advance(span: TimeSpan): Boolean
@@ -25,6 +30,18 @@ trait Timeline {
     def abort(): Unit
   }
 
-  /** Create a new instance of the timeline and return the cursor to its beginning. */
-  def instantiate(): this.type#Cursor
+  trait TimelineContext[T <: Timeline] {
+    def self: T
+    def cursor: T#Cursor
+    def time: TimePoint = cursor.time
+  }
+
+  abstract class PassThruCursor extends Cursor {
+    val timeline: Timeline
+    private val cursor = timeline.instantiate()
+    override def advance(span: TimeSpan): Boolean = cursor.advance(span)
+    override def time: TimePoint = cursor.time
+    override def done: Boolean = cursor.done
+    override def abort(): Unit = cursor.abort()
+  }
 }
