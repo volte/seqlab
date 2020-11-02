@@ -48,4 +48,8 @@ class Sequencer(initialTimelines: Timeline*) extends Timeline {
     override def time: TimePoint =
       _time
   }
+
+  /** Create a new instance of the timeline and return the cursor to its beginning. */
+  override def instantiate(): Cursor =
+    new Cursor()
 }

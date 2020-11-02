@@ -29,7 +29,7 @@ class MidiOutput(options: MidiOutput.Options) extends MidiTarget {
   }
 
   override def setTempo(timestamp: Long, tempo: Tempo): Unit =
-    channel(0).raw(timestamp, MidiUtils.tempoMessage(tempo.bpm))
+    channel(0).raw(timestamp, MidiMessageUtils.tempo(tempo.bpm))
 
   override def channel(index: Int): Channel =
     new Channel(index)

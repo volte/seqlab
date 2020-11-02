@@ -36,12 +36,17 @@ object Timeline {
     def time: TimePoint = cursor.time
   }
 
-  abstract class PassThruCursor extends Cursor {
-    val timeline: Timeline
-    private val cursor = timeline.instantiate()
-    override def advance(span: TimeSpan): Boolean = cursor.advance(span)
-    override def time: TimePoint = cursor.time
-    override def done: Boolean = cursor.done
-    override def abort(): Unit = cursor.abort()
+  abstract class LazyPassThruCursor extends Cursor {
+    def timeline: Timeline
+    private var cursor: Option[Timeline#Cursor] = None
+    override def advance(span: TimeSpan): Boolean = {
+      if (cursor.isEmpty) {
+        cursor = Some(timeline.instantiate())
+      }
+      cursor.exists(_.advance(span))
+    }
+    override def time: TimePoint = cursor.map(_.time).getOrElse(0)
+    override def done: Boolean = cursor.exists(_.done)
+    override def abort(): Unit = cursor.foreach(_.abort())
   }
 }

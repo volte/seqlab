@@ -32,8 +32,11 @@ class Mixer(init: Mixer.Context => Unit) extends Timeline {
     override def abort(): Unit =
       cursors = Seq()
 
-    def start(timeline: Timeline): Unit =
-      cursors :+= timeline.instantiate()
+    def start(timeline: => Timeline): Timeline#Cursor = {
+      val cursor = timeline.instantiate()
+      cursors :+= cursor
+      cursor
+    }
 
     override def done: Boolean =
       cursors.isEmpty
@@ -48,12 +51,10 @@ class Mixer(init: Mixer.Context => Unit) extends Timeline {
 
 object Mixer {
   type Init = Context => Unit
+  def defaultInit: Init = _ => {}
   case class Context(self: Mixer, cursor: Mixer#Cursor) extends TimelineContext[Mixer] {
-    def channel(init: Channel.Context => Unit): Channel = {
-      val newChannel = new Channel(init)
-      cursor.start(newChannel)
-      newChannel
-    }
+    def play(timeline: => Timeline): Timeline#Cursor =
+      cursor.start(timeline)
   }
 
   def apply(init: Init): Mixer =
